@@ -90,6 +90,11 @@ export const useDataCache = () => {
     setMapSettings: (data) => cache.set('map_settings', data, 10 * 60 * 1000),
     invalidateMapSettings: () => cache.invalidate('map_settings'),
 
+    // Profile (user settings, photo)
+    getProfile: () => cache.get('profile'),
+    setProfile: (data) => cache.set('profile', data, 10 * 60 * 1000),
+    invalidateProfile: () => cache.invalidate('profile'),
+
     // Utility
     invalidateAll: () => cache.invalidateAll(),
   };

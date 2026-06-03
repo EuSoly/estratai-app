@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, CreditCard, Palette, Bell, Link2, Shield, Sun, Moon, Key, Check, Globe } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useDataCache } from '../../hooks/useDataCache';
 import { getPlanColor, PLAN_COLORS, PLAN_LEVELS } from '../../constants/plans';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
 
@@ -102,8 +103,11 @@ function MockBadge({ children }) {
 
 // ─── Seção: Conta ─────────────────────────────────────────────────────────────
 function SecaoConta({ user }) {
-  const [name, setName]           = useState('');
-  const [photoUrl, setPhotoUrl]   = useState('');
+  const cache = useDataCache();
+  const cachedProfile = cache.getProfile();
+
+  const [name, setName]           = useState(() => cachedProfile?.full_name || '');
+  const [photoUrl, setPhotoUrl]   = useState(() => cachedProfile?.photo_url || '');
   const [saving, setSaving]       = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -111,12 +115,19 @@ function SecaoConta({ user }) {
 
   useEffect(() => {
     if (!user) return;
+
+    // Se tem cache válido, não fetch
+    if (cachedProfile) return;
+
     supabase.from('profiles').select('full_name, photo_url').eq('id', user.id).single()
       .then(({ data }) => {
-        if (data?.full_name) setName(data.full_name);
-        if (data?.photo_url) setPhotoUrl(data.photo_url);
+        if (data) {
+          if (data?.full_name) setName(data.full_name);
+          if (data?.photo_url) setPhotoUrl(data.photo_url);
+          cache.setProfile(data);
+        }
       });
-  }, [user]);
+  }, [user, cachedProfile]);
 
   const handleOpenPhotoModal = () => {
     setTempPhotoUrl(photoUrl);
@@ -152,6 +163,8 @@ function SecaoConta({ user }) {
 
       if (error) throw error;
       setPhotoUrl(tempPhotoUrl);
+      cache.invalidateProfile();
+      cache.setProfile({ ...cachedProfile, photo_url: tempPhotoUrl });
       setShowPhotoModal(false);
     } catch (err) {
       console.error('Erro ao salvar foto:', err);
@@ -174,6 +187,8 @@ function SecaoConta({ user }) {
       if (error) throw error;
       setPhotoUrl('');
       setTempPhotoUrl('');
+      cache.invalidateProfile();
+      cache.setProfile({ ...cachedProfile, photo_url: null });
       setShowPhotoModal(false);
     } catch (err) {
       console.error('Erro ao deletar foto:', err);
@@ -186,7 +201,11 @@ function SecaoConta({ user }) {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    await supabase.from('profiles').update({ full_name: name }).eq('id', user.id);
+    const { error } = await supabase.from('profiles').update({ full_name: name }).eq('id', user.id);
+    if (!error) {
+      cache.invalidateProfile();
+      cache.setProfile({ ...cachedProfile, full_name: name });
+    }
     setSaving(false);
   };
 
