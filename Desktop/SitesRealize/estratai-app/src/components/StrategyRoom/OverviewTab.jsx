@@ -4,6 +4,14 @@ import { supabase } from '../../supabaseClient';
 
 import { PLAN_LEVELS, getPlanColor } from '../../constants/plans';
 
+// Validar schema do report_data retornado pelo webhook
+const validateReportData = (data) => {
+  if (!data || typeof data !== 'object') return false;
+  // Schema esperado: agentName, score, executiveSummary, swot, risks, actionPlan, insights
+  const requiredFields = ['agentName', 'score'];
+  return requiredFields.every(field => field in data);
+};
+
 export default function OverviewTab({ project, userPlan = 'Starter' }) {
   const [strategy, setStrategy] = useState("");
   const [agentId, setAgentId] = useState(null);
@@ -78,6 +86,21 @@ export default function OverviewTab({ project, userPlan = 'Starter' }) {
         return;
       }
 
+      if (!webhookUrl) {
+        alert("Configure a URL do webhook n8n em Configurações → Integrações antes de iniciar.");
+        setIsStarting(false);
+        return;
+      }
+
+      // Validar URL do webhook
+      try {
+        new URL(webhookUrl);
+      } catch (e) {
+        alert("URL do webhook inválida. Verifique em Configurações → Integrações.");
+        setIsStarting(false);
+        return;
+      }
+
       const payload = {
         userId: user.id,
         projectId: project.id,
@@ -85,17 +108,18 @@ export default function OverviewTab({ project, userPlan = 'Starter' }) {
         strategy: strategy
       };
 
-      if (!webhookUrl) {
-        alert("Configure a URL do webhook n8n em Configurações → Integrações antes de iniciar.");
-        setIsStarting(false);
-        return;
-      }
+      // Fetch com timeout de 30 segundos
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Webhook retornou erro ${response.status}: ${response.statusText}`);
@@ -103,8 +127,15 @@ export default function OverviewTab({ project, userPlan = 'Starter' }) {
 
       const result = await response.json();
 
-      // Se n8n retornar report_data, salva no banco
+      // Validar schema do report_data antes de salvar
       if (result?.report_data) {
+        if (!validateReportData(result.report_data)) {
+          console.warn('Report data schema inválido:', result.report_data);
+          alert("Aviso: Resposta do webhook tem formato inesperado. Dados não foram salvos.");
+          setIsStarting(false);
+          return;
+        }
+
         await supabase
           .from('projects')
           .update({ report_data: result.report_data })
@@ -116,7 +147,9 @@ export default function OverviewTab({ project, userPlan = 'Starter' }) {
       console.error("Erro ao disparar auditoria:", error);
 
       let errorMessage = "Houve um erro ao iniciar a auditoria.";
-      if (error instanceof TypeError) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Timeout: Webhook demorou muito para responder (máx 30s).";
+      } else if (error instanceof TypeError) {
         errorMessage = "Erro de conexão: Verifique a URL do webhook e sua conexão de internet.";
       } else if (error?.message?.includes("Webhook retornou erro")) {
         errorMessage = `O servidor respondeu com erro: ${error.message}`;
