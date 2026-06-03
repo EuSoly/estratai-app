@@ -106,6 +106,8 @@ function SecaoConta({ user }) {
   const [photoUrl, setPhotoUrl]   = useState('');
   const [saving, setSaving]       = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [tempPhotoUrl, setTempPhotoUrl] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -116,31 +118,67 @@ function SecaoConta({ user }) {
       });
   }, [user]);
 
-  const handlePhotoUpload = async (e) => {
+  const handleOpenPhotoModal = () => {
+    setTempPhotoUrl(photoUrl);
+    setShowPhotoModal(true);
+  };
+
+  const handlePhotoSelect = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
 
     setUploading(true);
     try {
-      // Converter arquivo para base64
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result;
-        setPhotoUrl(base64);
-
-        // Salvar base64 diretamente no banco
-        const { error } = await supabase
-          .from('profiles')
-          .update({ photo_url: base64 })
-          .eq('id', user.id);
-
-        if (error) throw error;
+      reader.onloadend = () => {
+        setTempPhotoUrl(reader.result);
         setUploading(false);
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      console.error('Erro no upload:', err);
-      alert('Erro ao fazer upload da foto');
+      console.error('Erro ao ler arquivo:', err);
+      setUploading(false);
+    }
+  };
+
+  const handleApplyPhoto = async () => {
+    if (!user) return;
+    setUploading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ photo_url: tempPhotoUrl })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      setPhotoUrl(tempPhotoUrl);
+      setShowPhotoModal(false);
+    } catch (err) {
+      console.error('Erro ao salvar foto:', err);
+      alert('Erro ao salvar foto');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!user || !confirm('Excluir foto de perfil?')) return;
+
+    setUploading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ photo_url: null })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      setPhotoUrl('');
+      setTempPhotoUrl('');
+      setShowPhotoModal(false);
+    } catch (err) {
+      console.error('Erro ao deletar foto:', err);
+      alert('Erro ao deletar foto');
+    } finally {
       setUploading(false);
     }
   };
@@ -159,28 +197,27 @@ function SecaoConta({ user }) {
       <SettingsCard>
         {/* Avatar */}
         <div className="flex items-center gap-6 mb-8 pb-8 border-b border-[#262626]">
-          <div className="w-16 h-16 border border-[#262626] bg-[#0A0A0A] flex items-center justify-center overflow-hidden flex-shrink-0">
-            {photoUrl ? (
-              <img src={photoUrl} alt="Foto de perfil" className="w-full h-full object-cover" />
-            ) : (
-              <User size={28} className="text-[#525252]" />
-            )}
-          </div>
+          <button
+            onClick={handleOpenPhotoModal}
+            className="relative w-16 h-16 flex-shrink-0 group"
+          >
+            <div className="w-16 h-16 border-2 border-[#262626] bg-[#0A0A0A] flex items-center justify-center overflow-hidden rounded-full group-hover:border-[#842CD5] transition-colors">
+              {photoUrl ? (
+                <img src={photoUrl} alt="Foto de perfil" className="w-full h-full object-cover" />
+              ) : (
+                <User size={28} className="text-[#525252]" />
+              )}
+            </div>
+            <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-white text-xs font-mono uppercase">Editar</span>
+            </div>
+          </button>
+
           <div className="flex-1">
             <p className="font-mono text-xs text-[#F2EFE9] uppercase tracking-widest mb-1">Foto de Perfil</p>
             <p className="font-sans text-xs text-[#525252] mb-2">
-              {photoUrl ? 'Foto carregada com sucesso' : 'Nenhuma foto ainda'}
+              {photoUrl ? 'Clique para editar' : 'Nenhuma foto ainda'}
             </p>
-            <label className="font-mono text-[10px] uppercase tracking-widest text-[#737373] hover:text-[#842CD5] transition-colors cursor-pointer flex items-center gap-1">
-              {uploading ? 'Enviando...' : 'Alterar foto'}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                disabled={uploading}
-                className="hidden"
-              />
-            </label>
           </div>
         </div>
 
@@ -217,6 +254,77 @@ function SecaoConta({ user }) {
           </button>
         </div>
       </SettingsCard>
+
+      {/* Modal Editar Foto - Estilo Discord */}
+      {showPhotoModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => !uploading && setShowPhotoModal(false)}>
+          <div className="bg-[#2C2F33] rounded-lg p-8 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-white font-bold text-lg">Editar Imagem</h2>
+              <button
+                onClick={() => !uploading && setShowPhotoModal(false)}
+                className="text-[#A3A3A3] hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Preview Circular */}
+            <div className="flex justify-center mb-6">
+              <div className="w-48 h-48 rounded-full border-4 border-white overflow-hidden bg-[#0A0A0A] flex items-center justify-center">
+                {tempPhotoUrl ? (
+                  <img src={tempPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={60} className="text-[#525252]" />
+                )}
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex justify-center gap-4 mb-6">
+              <label className="p-3 bg-[#202225] hover:bg-[#2C2F33] rounded-full cursor-pointer transition-colors border border-[#404249]">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoSelect}
+                  disabled={uploading}
+                  className="hidden"
+                />
+                <span className="text-[#72767D] text-xs">📁</span>
+              </label>
+
+              {tempPhotoUrl && (
+                <button
+                  onClick={handleDeletePhoto}
+                  disabled={uploading}
+                  className="p-3 bg-red-900/30 hover:bg-red-900/50 rounded-full transition-colors border border-red-500/30 disabled:opacity-50"
+                >
+                  <span className="text-red-400 text-xs">🗑️</span>
+                </button>
+              )}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => !uploading && setShowPhotoModal(false)}
+                disabled={uploading}
+                className="flex-1 px-4 py-2 bg-[#404249] hover:bg-[#40444B] text-white font-semibold rounded transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleApplyPhoto}
+                disabled={uploading || !tempPhotoUrl}
+                className="flex-1 px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold rounded transition-colors disabled:opacity-50"
+              >
+                {uploading ? 'Salvando...' : 'Aplicar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
