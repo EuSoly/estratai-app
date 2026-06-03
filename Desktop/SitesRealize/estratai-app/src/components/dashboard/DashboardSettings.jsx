@@ -215,9 +215,12 @@ function SecaoConta({ user }) {
 
           <div className="flex-1">
             <p className="font-mono text-xs text-[#F2EFE9] uppercase tracking-widest mb-1">Foto de Perfil</p>
-            <p className="font-sans text-xs text-[#525252] mb-2">
+            <button
+              onClick={handleOpenPhotoModal}
+              className="font-sans text-xs text-[#737373] hover:text-[#842CD5] transition-colors cursor-pointer"
+            >
               {photoUrl ? 'Clique para editar' : 'Nenhuma foto ainda'}
-            </p>
+            </button>
           </div>
         </div>
 
