@@ -122,28 +122,25 @@ function SecaoConta({ user }) {
 
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const filename = `${user.id}_${Date.now()}.${ext}`;
+      // Converter arquivo para base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result;
+        setPhotoUrl(base64);
 
-      const { error: uploadErr } = await supabase.storage
-        .from('avatars')
-        .upload(filename, file, { upsert: true });
+        // Salvar base64 diretamente no banco
+        const { error } = await supabase
+          .from('profiles')
+          .update({ photo_url: base64 })
+          .eq('id', user.id);
 
-      if (uploadErr) throw uploadErr;
-
-      const { data } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filename);
-
-      const url = data?.publicUrl;
-      if (url) {
-        setPhotoUrl(url);
-        await supabase.from('profiles').update({ photo_url: url }).eq('id', user.id);
-      }
+        if (error) throw error;
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
     } catch (err) {
       console.error('Erro no upload:', err);
       alert('Erro ao fazer upload da foto');
-    } finally {
       setUploading(false);
     }
   };
