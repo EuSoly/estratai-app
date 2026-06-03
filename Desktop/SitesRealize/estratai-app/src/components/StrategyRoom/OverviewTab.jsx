@@ -101,6 +101,16 @@ export default function OverviewTab({ project, userPlan = 'Starter' }) {
         throw new Error(`Webhook retornou erro ${response.status}: ${response.statusText}`);
       }
 
+      const result = await response.json();
+
+      // Se n8n retornar report_data, salva no banco
+      if (result?.report_data) {
+        await supabase
+          .from('projects')
+          .update({ report_data: result.report_data })
+          .eq('id', project.id);
+      }
+
       alert("Motor de IA Inicializado! Dados enviados ao n8n com sucesso.");
     } catch (error) {
       console.error("Erro ao disparar auditoria:", error);

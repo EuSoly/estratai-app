@@ -102,14 +102,51 @@ function MockBadge({ children }) {
 
 // ─── Seção: Conta ─────────────────────────────────────────────────────────────
 function SecaoConta({ user }) {
-  const [name, setName]     = useState('');
-  const [saving, setSaving] = useState(false);
+  const [name, setName]           = useState('');
+  const [photoUrl, setPhotoUrl]   = useState('');
+  const [saving, setSaving]       = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    supabase.from('profiles').select('full_name').eq('id', user.id).single()
-      .then(({ data }) => { if (data?.full_name) setName(data.full_name); });
+    supabase.from('profiles').select('full_name, photo_url').eq('id', user.id).single()
+      .then(({ data }) => {
+        if (data?.full_name) setName(data.full_name);
+        if (data?.photo_url) setPhotoUrl(data.photo_url);
+      });
   }, [user]);
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const filename = `${user.id}_${Date.now()}.${ext}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(filename, file, { upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filename);
+
+      const url = data?.publicUrl;
+      if (url) {
+        setPhotoUrl(url);
+        await supabase.from('profiles').update({ photo_url: url }).eq('id', user.id);
+      }
+    } catch (err) {
+      console.error('Erro no upload:', err);
+      alert('Erro ao fazer upload da foto');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -123,17 +160,30 @@ function SecaoConta({ user }) {
       <SectionLabel>Informações da Conta</SectionLabel>
 
       <SettingsCard>
-        {/* Avatar placeholder */}
+        {/* Avatar */}
         <div className="flex items-center gap-6 mb-8 pb-8 border-b border-[#262626]">
-          <div className="w-16 h-16 border border-[#262626] bg-[#0A0A0A] flex items-center justify-center">
-            <User size={28} className="text-[#525252]" />
+          <div className="w-16 h-16 border border-[#262626] bg-[#0A0A0A] flex items-center justify-center overflow-hidden flex-shrink-0">
+            {photoUrl ? (
+              <img src={photoUrl} alt="Foto de perfil" className="w-full h-full object-cover" />
+            ) : (
+              <User size={28} className="text-[#525252]" />
+            )}
           </div>
-          <div>
+          <div className="flex-1">
             <p className="font-mono text-xs text-[#F2EFE9] uppercase tracking-widest mb-1">Foto de Perfil</p>
-            <p className="font-sans text-xs text-[#525252]">Upload de imagem não disponível nesta versão.</p>
-            <button className="font-mono text-[10px] uppercase tracking-widest text-[#737373] hover:text-[#842CD5] transition-colors mt-2 flex items-center gap-1">
-              Alterar foto <MockBadge />
-            </button>
+            <p className="font-sans text-xs text-[#525252] mb-2">
+              {photoUrl ? 'Foto carregada com sucesso' : 'Nenhuma foto ainda'}
+            </p>
+            <label className="font-mono text-[10px] uppercase tracking-widest text-[#737373] hover:text-[#842CD5] transition-colors cursor-pointer flex items-center gap-1">
+              {uploading ? 'Enviando...' : 'Alterar foto'}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
 
