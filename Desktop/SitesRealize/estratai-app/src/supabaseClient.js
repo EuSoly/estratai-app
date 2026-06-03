@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Substitua com a sua URL e Key do painel do Supabase
-const supabaseUrl = 'https://jbvrrkqtnxqzszmfewfv.supabase.co'
-const supabaseKey = 'sb_publishable_Asqonoa3Y5Joavgjk4t-6w_YAAuWeMS'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase environment variables. Please check .env file.')
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey)

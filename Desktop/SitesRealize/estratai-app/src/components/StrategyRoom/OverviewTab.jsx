@@ -97,12 +97,24 @@ export default function OverviewTab({ project, userPlan = 'Starter' }) {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error(`Erro no Webhook: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Webhook retornou erro ${response.status}: ${response.statusText}`);
+      }
 
       alert("Motor de IA Inicializado! Dados enviados ao n8n com sucesso.");
     } catch (error) {
       console.error("Erro ao disparar auditoria:", error);
-      alert("Houve um erro ao iniciar a auditoria. Verifique o console.");
+
+      let errorMessage = "Houve um erro ao iniciar a auditoria.";
+      if (error instanceof TypeError) {
+        errorMessage = "Erro de conexão: Verifique a URL do webhook e sua conexão de internet.";
+      } else if (error?.message?.includes("Webhook retornou erro")) {
+        errorMessage = `O servidor respondeu com erro: ${error.message}`;
+      } else if (error?.message) {
+        errorMessage = `Erro: ${error.message}`;
+      }
+
+      alert(errorMessage);
     } finally {
       setIsStarting(false);
     }

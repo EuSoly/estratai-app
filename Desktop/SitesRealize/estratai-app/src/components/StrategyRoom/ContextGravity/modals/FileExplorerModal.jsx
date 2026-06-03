@@ -12,13 +12,13 @@ export default function FileExplorerModal({ projectId, onClose, onLinkFile, link
 
   useEffect(() => {
     fetchExplorerItems();
-  }, [currentFolderId, searchQuery]);
+  }, [currentFolderId, searchQuery, projectId, linkedFileIds]);
 
   const fetchExplorerItems = async () => {
     try {
       setModalLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user || !projectId) return;
 
       let query = supabase.from('vault_items').select('*').eq('user_id', user.id);
 
@@ -28,10 +28,12 @@ export default function FileExplorerModal({ projectId, onClose, onLinkFile, link
         if (currentFolderId) query = query.eq('parent_id', currentFolderId);
         else query = query.is('parent_id', null);
       }
-      
+
       const { data, error } = await query;
       if (error) throw error;
-      setModalItems(data || []);
+
+      const filteredItems = (data || []).filter(item => !linkedFileIds.includes(item.id));
+      setModalItems(filteredItems);
     } catch (err) {
       console.error("❌ Erro ao listar itens do cofre:", err.message);
     } finally {
