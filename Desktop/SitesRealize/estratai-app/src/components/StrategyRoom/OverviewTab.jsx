@@ -34,12 +34,12 @@ export default function OverviewTab({ project, userPlan = 'Starter' }) {
   const fetchProjectSettings = async () => {
     const { data } = await supabase
       .from('projects')
-      .select('company_strategy, agent_id, status')
+      .select('project_strategy, agent_id, status')
       .eq('id', project.id)
       .single();
 
     if (data) {
-      if (data.company_strategy) setStrategy(data.company_strategy);
+      if (data.project_strategy) setStrategy(data.project_strategy);
       if (data.agent_id) setAgentId(data.agent_id);
     }
   };
@@ -66,7 +66,7 @@ export default function OverviewTab({ project, userPlan = 'Starter' }) {
   };
 
   const startAnalysis = async () => {
-    await saveSettings({ company_strategy: strategy, agent_id: agentId });
+    await saveSettings({ project_strategy: strategy, agent_id: agentId });
     setIsStarting(true);
 
     try {
@@ -185,17 +185,17 @@ export default function OverviewTab({ project, userPlan = 'Starter' }) {
           </div>
         </div>
 
-        {/* DIRETRIZ ESTRATÉGICA */}
+        {/* DIRETRIZES DO PROJETO */}
         <div className="border border-[#262626] bg-[#101010] p-8">
           <div className="flex items-center gap-3 mb-6">
             <Target className="text-[var(--color-plan)]" size={20} />
-            <h3 className="font-mono text-xs uppercase tracking-widest text-[#F2EFE9]">Diretriz Estratégica da Empresa</h3>
+            <h3 className="font-mono text-xs uppercase tracking-widest text-[#F2EFE9]">Diretrizes do Projeto</h3>
           </div>
           <textarea
             value={strategy}
             onChange={(e) => setStrategy(e.target.value)}
-            onBlur={() => saveSettings({ company_strategy: strategy })}
-            placeholder="Ex: Focar em crescimento exponencial sacrificando margem no curto prazo..."
+            onBlur={() => saveSettings({ project_strategy: strategy })}
+            placeholder="Ex: Focar na transformação digital com abordagem ágil e iterativa..."
             className="w-full bg-[#0A0A0A] border border-[#262626] p-4 text-[#F2EFE9] font-sans text-sm focus:border-[var(--color-plan)] outline-none min-h-[120px] resize-none"
           />
           <div className="flex items-center gap-2 mt-3">
