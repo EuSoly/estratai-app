@@ -3,6 +3,7 @@ import { User, CreditCard, Palette, Bell, Link2, Shield, Sun, Moon, Key, Check, 
 import { supabase } from '../../supabaseClient';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getPlanColor, PLAN_COLORS, PLAN_LEVELS } from '../../constants/plans';
+import { useUserPreferences } from '../../hooks/useUserPreferences';
 
 // ─── Seções disponíveis ───────────────────────────────────────────────────────
 const SECTIONS = [
@@ -252,7 +253,7 @@ function SecaoPlano({ userPlan }) {
 // ─── Seção: Aparência ─────────────────────────────────────────────────────────
 function SecaoAparencia() {
   const { theme, toggleTheme } = useTheme();
-  const [density, setDensity] = useState('normal');
+  const { prefs, updatePref } = useUserPreferences();
 
   return (
     <div className="space-y-6">
@@ -290,27 +291,24 @@ function SecaoAparencia() {
         </p>
       </SettingsCard>
 
-      <SectionLabel>Densidade de Interface</SectionLabel>
+      <SectionLabel>Modo Compacto</SectionLabel>
       <SettingsCard>
-        <div className="flex gap-3">
-          {['Compacta', 'Normal', 'Espaçada'].map(d => (
-            <button
-              key={d}
-              onClick={() => setDensity(d.toLowerCase())}
-              className="flex-1 py-3 font-mono text-[10px] uppercase tracking-widest border transition-colors"
-              style={density === d.toLowerCase()
-                ? { borderColor: '#842CD5', color: '#842CD5', backgroundColor: 'rgba(132,44,213,0.05)' }
-                : { borderColor: '#262626', color: '#525252' }
-              }
-            >
-              {d}
-            </button>
-          ))}
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <p className="font-sans text-xs text-[#525252]">Configuração visual ainda não aplicada à interface.</p>
-          <MockBadge />
-        </div>
+        <Toggle
+          enabled={prefs.compactMode}
+          onToggle={() => updatePref('compactMode', !prefs.compactMode)}
+          label="Interface Compacta"
+          description="Reduz espaçamento e aumenta densidade de informações (em desenvolvimento)."
+        />
+      </SettingsCard>
+
+      <SectionLabel>Animações</SectionLabel>
+      <SettingsCard>
+        <Toggle
+          enabled={prefs.animationsEnabled}
+          onToggle={() => updatePref('animationsEnabled', !prefs.animationsEnabled)}
+          label="Ativar Animações"
+          description="Desative para melhor performance em conexões lentas."
+        />
       </SettingsCard>
 
       <SectionLabel>Idioma</SectionLabel>
@@ -332,35 +330,40 @@ function SecaoAparencia() {
 
 // ─── Seção: Notificações ──────────────────────────────────────────────────────
 function SecaoNotificacoes() {
-  const [prefs, setPrefs] = useState({
-    emailRelatorio:   true,
-    emailUpgrade:     false,
-    emailNewsletter:  false,
-    appAnalise:       true,
-    appMencoes:       true,
-    appSistema:       false,
-  });
-
-  const toggle = (key) => setPrefs(p => ({ ...p, [key]: !p[key] }));
+  const { prefs, updatePref } = useUserPreferences();
 
   return (
     <div className="space-y-6">
       <SectionLabel>Notificações por E-mail</SectionLabel>
       <SettingsCard>
-        <Toggle enabled={prefs.emailRelatorio}  onToggle={() => toggle('emailRelatorio')}  label="Relatório Concluído"      description="Aviso quando um agente finalizar a análise." />
-        <Toggle enabled={prefs.emailUpgrade}    onToggle={() => toggle('emailUpgrade')}    label="Novidades de Plano"        description="Promoções e atualizações de funcionalidades." />
-        <Toggle enabled={prefs.emailNewsletter} onToggle={() => toggle('emailNewsletter')} label="Newsletter"                description="Conteúdo estratégico semanal." />
+        <Toggle
+          enabled={prefs.emailNotifications}
+          onToggle={() => updatePref('emailNotifications', !prefs.emailNotifications)}
+          label="Notificações por E-mail"
+          description="Receba notificações importantes por e-mail."
+        />
+        <Toggle
+          enabled={prefs.weeklyDigest}
+          onToggle={() => updatePref('weeklyDigest', !prefs.weeklyDigest)}
+          label="Resumo Semanal"
+          description="Resumo semanal de atividades e descobertas."
+        />
       </SettingsCard>
 
       <SectionLabel>Notificações no App</SectionLabel>
       <SettingsCard>
-        <Toggle enabled={prefs.appAnalise}  onToggle={() => toggle('appAnalise')}  label="Status de Análise"    description="Progresso e conclusão dos agentes em execução." />
-        <Toggle enabled={prefs.appMencoes}  onToggle={() => toggle('appMencoes')}  label="Menções em Projetos"  description="Quando alguém comentar ou editar um projeto seu." />
-        <Toggle enabled={prefs.appSistema}  onToggle={() => toggle('appSistema')}  label="Alertas do Sistema"   description="Manutenções programadas e incidentes." />
+        <Toggle
+          enabled={prefs.pushNotifications}
+          onToggle={() => updatePref('pushNotifications', !prefs.pushNotifications)}
+          label="Notificações Push"
+          description="Alertas em tempo real sobre análises e atualizações."
+        />
       </SettingsCard>
 
-      <div className="flex justify-end">
-        <SaveButton onClick={() => {}} saving={false} label="Salvar Preferências" />
+      <div className="flex justify-end gap-3">
+        <p className="font-mono text-[9px] uppercase text-[#737373] self-center">
+          Preferências salvas automaticamente
+        </p>
       </div>
     </div>
   );
