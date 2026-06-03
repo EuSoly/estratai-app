@@ -25,7 +25,12 @@ export default function DashboardInjection() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    initializeVaultItems();
+    (async () => {
+      const shouldFetch = await validateVaultItemsTimestamp();
+      if (shouldFetch) {
+        await fetchVaultItems();
+      }
+    })();
   }, []);
 
   const validateVaultItemsTimestamp = async () => {
@@ -42,13 +47,6 @@ export default function DashboardInjection() {
       return data[0].created_at !== cachedVaultItems.latestUpdate;
     } catch {
       return true;
-    }
-  };
-
-  const initializeVaultItems = async () => {
-    const shouldFetch = await validateVaultItemsTimestamp();
-    if (shouldFetch) {
-      fetchVaultItems();
     }
   };
 
