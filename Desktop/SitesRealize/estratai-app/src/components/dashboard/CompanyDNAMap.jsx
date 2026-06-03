@@ -170,7 +170,7 @@ export default function CompanyDNAMap({
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: `radial-gradient(${isDark ? '#842CD5' : '#7a3fab'} 1.5px, transparent 1.5px)`,
+          backgroundImage: `radial-gradient(${isDark ? '#842CD5' : '#7a3fab'} 3px, transparent 3px)`,
           backgroundSize: '35px 35px',
           opacity: isDark ? 0.15 : 0.12
         }}
