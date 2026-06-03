@@ -1,5 +1,5 @@
 # EstratAI — Contexto do Projeto para Claude Code
-> Última atualização: 2026-06-02 (sessão 6)
+> Última atualização: 2026-06-03 (sessão 7)
 
 ## Visão Geral
 SaaS de inteligência estratégica. O usuário cria "projetos de consultoria", injeta documentos como contexto (vault), visualiza arquivos em uma arena gravitacional interativa e aciona agentes de IA para análise estratégica.
@@ -180,19 +180,65 @@ Enterprise: #DD20AE (pink)
 - Links legais com `href="#"` — precisam de rotas reais (`/termos`, `/privacidade`)
 - Ícones: Globe, ExternalLink, Mail (Linkedin/Instagram não existem nesta versão do lucide-react)
 
+## Environment Configuration (Session 7)
+**Centralizado em `src/config/env.js`**
+
+### Arquivos
+- **`.env`** — local (valores REAIS, no .gitignore, NUNCA commit)
+- **`.env.example`** — template público (sempre commit)
+- **`.env.DOCUMENTATION.md`** — referência detalhada (sempre commit)
+
+### Variáveis Principais
+```
+VITE_SUPABASE_URL                 # URL do Supabase
+VITE_SUPABASE_ANON_KEY            # Chave pública Supabase
+VITE_APP_URL                      # URL da app (localhost:5173 dev)
+VITE_MAX_FILE_SIZE_MB=20          # Limit upload
+VITE_ALLOWED_FILE_TYPES=pdf,...   # Formatos permitidos
+VITE_SEARCH_DEBOUNCE_MS=300       # Debounce FileExplorer
+VITE_N8N_WEBHOOK_URL              # Webhook para análises
+VITE_FEATURE_*                    # Feature flags
+VITE_DEBUG=false                  # Debug mode
+```
+
+### Validação
+- `src/config/env.js` importa e valida ao startup
+- Erros de vars obrigatórias logados no console
+- Defaults sensatos para todas as vars opcionais
+
 ## Próximas tarefas sugeridas
 - Criar páginas de Termos de Uso e Política de Privacidade
 - Conectar webhook n8n com a estrutura de `report_data` definida no EditorTab
 - Corrigir bugs pendentes de dados órfãos (project_files sem CASCADE)
 - Extrair `PLAN_LEVELS` para `src/constants/plans.js`
 
-## Bugs Pendentes (ainda não corrigidos)
-1. Deleção de projeto não limpa `project_files` (sem CASCADE confirmado)
-2. Deleção de vault item não limpa `project_files.file_id`
-3. `PLAN_LEVELS` duplicado em 3+ arquivos → extrair para constants
-4. `toggleSelectAll` em DashboardInjection compara lengths em vez de conjuntos
-5. Ângulo inicial de nós usa `data.length` pré-filtro em vez de `filtered.length`
-6. Links legais do Footer apontam para `#`
+## Sessão 7 Updates (2026-06-03)
+
+### ✅ Concluído
+- RTK (Rust Token Killer) instalado + configurado globalmente
+- GitHub privado conectado: https://github.com/EuSoly/estratai-app
+- Security review: 14 findings documentados em `SECURITY_FINDINGS.md`
+- **3 bugs críticos corrigidos**: Supabase key → env vars, FileExplorer project filter, webhook error handling
+- **7 bugs Sprint 1 corrigidos**: angle calc, toggleSelectAll, render nav, .single() errors, null checks, debounce, orphaned items
+- Configuração centralizada: `src/config/env.js` com validação
+- `.env` / `.env.example` / `.env.DOCUMENTATION.md` criados
+
+### Commits desta sessão
+- `616bb26` refactor: centralize configuration in environment variables
+- `6503e91` fix(sprint-1): resolve 7 high-priority bugs
+- `ae69d91` fix: resolve 3 critical security issues
+- `4e13e13` Initial commit: EstratAI SaaS project setup
+
+## Bugs Pendentes (para próximas sprints)
+1. ✅ FIXED: Deleção de projeto não limpa `project_files` (sem CASCADE confirmado) → Sprint 2
+2. ✅ FIXED: Deleção de vault item não limpa `project_files.file_id` → Sprint 2
+3. ❌ `PLAN_LEVELS` duplicado em 3+ arquivos → extrair para constants (backlog)
+4. ✅ FIXED: `toggleSelectAll` em DashboardInjection compara lengths
+5. ✅ FIXED: Ângulo inicial de nós usa `data.length` pré-filtro
+6. ❌ Links legais do Footer apontam para `#` (backlog)
+7. ❌ Toast notification system (melhor que alert) (backlog ID 11)
+8. ❌ useEffect dependency refactor (backlog ID 12)
+9. ❌ Silent redirect UX improvement (backlog ID 14)
 
 ## Comandos
 ```bash
