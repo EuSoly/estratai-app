@@ -14,8 +14,11 @@ import { PLAN_LEVELS } from '../../constants/plans';
 export default function DashboardOverview({ onSelectProject, userPlan = 'Starter' }) {
   const cache = useDataCache();
 
-  const [projects, setProjects] = useState(() => cache.getProjects() || []);
-  const [vaultItems, setVaultItems] = useState(() => cache.getVaultItems() || []);
+  const cachedProjects = cache.getProjects();
+  const cachedVaultItems = cache.getVaultItems();
+
+  const [projects, setProjects] = useState(() => cachedProjects?.data || []);
+  const [vaultItems, setVaultItems] = useState(() => cachedVaultItems?.data || []);
   const [availableAgents, setAvailableAgents] = useState(() => cache.getAgents() || []);
   const [projectFilesLinks, setProjectFilesLinks] = useState(() => cache.getProjectFiles() || []);
 
@@ -38,10 +41,41 @@ export default function DashboardOverview({ onSelectProject, userPlan = 'Starter
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchData(), fetchMapData()]).then(() => {
+    const initData = async () => {
+      // Valida projects antes de refetch
+      const shouldRefetchProjects = await validateProjectsTimestamp();
+
+      // Só refetch se necessário
+      const fetchPromises = [
+        shouldRefetchProjects ? fetchData() : Promise.resolve(),
+        fetchMapData()
+      ];
+
+      await Promise.all(fetchPromises);
       setIsMapLoaded(true);
-    });
+    };
+
+    initData();
   }, []);
+
+  const validateProjectsTimestamp = async () => {
+    if (!cachedProjects?.latestUpdate) return true; // Sem cache, refetch
+
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error || !data?.[0]) return true; // Erro, refetch
+
+      // Se timestamp é igual, skip refetch
+      return data[0].created_at !== cachedProjects.latestUpdate;
+    } catch {
+      return true; // Erro de conexão, refetch
+    }
+  };
 
   const fetchData = async () => {
     const [projRes, itemsRes, agentRes, pfRes] = await Promise.all([
@@ -53,11 +87,13 @@ export default function DashboardOverview({ onSelectProject, userPlan = 'Starter
 
     if (!projRes.error) {
       setProjects(projRes.data);
-      cache.setProjects(projRes.data);
+      const latestUpdate = projRes.data?.[0]?.created_at;
+      cache.setProjects(projRes.data, latestUpdate);
     }
     if (!itemsRes.error) {
       setVaultItems(itemsRes.data);
-      cache.setVaultItems(itemsRes.data);
+      const latestUpdate = itemsRes.data?.[0]?.created_at;
+      cache.setVaultItems(itemsRes.data, latestUpdate);
     }
     if (!agentRes.error) {
       setAvailableAgents(agentRes.data);

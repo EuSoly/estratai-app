@@ -11,8 +11,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardInjection() {
   const cache = useDataCache();
+  const cachedVaultItems = cache.getVaultItems();
 
-  const [items, setItems] = useState(() => cache.getVaultItems() || []);
+  const [items, setItems] = useState(() => cachedVaultItems?.data || []);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,8 +25,32 @@ export default function DashboardInjection() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchVaultItems();
+    initializeVaultItems();
   }, []);
+
+  const validateVaultItemsTimestamp = async () => {
+    if (!cachedVaultItems?.latestUpdate) return true;
+
+    try {
+      const { data, error } = await supabase
+        .from('vault_items')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error || !data?.[0]) return true;
+      return data[0].created_at !== cachedVaultItems.latestUpdate;
+    } catch {
+      return true;
+    }
+  };
+
+  const initializeVaultItems = async () => {
+    const shouldFetch = await validateVaultItemsTimestamp();
+    if (shouldFetch) {
+      fetchVaultItems();
+    }
+  };
 
   const fetchVaultItems = async () => {
     const { data, error } = await supabase
@@ -48,7 +73,8 @@ export default function DashboardInjection() {
     }));
 
     setItems(formattedData);
-    cache.setVaultItems(formattedData);
+    const latestUpdate = data?.[0]?.created_at;
+    cache.setVaultItems(formattedData, latestUpdate);
   };
 
   // --- 2. ENGENHARIA DE RASTREAMENTO DE CAMINHO ---

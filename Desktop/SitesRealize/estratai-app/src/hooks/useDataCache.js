@@ -67,12 +67,18 @@ export const useDataCache = () => {
   return {
     // Projects
     getProjects: () => cache.get('projects'),
-    setProjects: (data) => cache.set('projects', data, 5 * 60 * 1000),
+    setProjects: (data, latestUpdate) => {
+      const cacheData = { data, latestUpdate };
+      cache.set('projects', cacheData, 5 * 60 * 1000);
+    },
     invalidateProjects: () => cache.invalidate('projects'),
 
     // Vault items
     getVaultItems: () => cache.get('vault_items'),
-    setVaultItems: (data) => cache.set('vault_items', data, 5 * 60 * 1000),
+    setVaultItems: (data, latestUpdate) => {
+      const cacheData = { data, latestUpdate };
+      cache.set('vault_items', cacheData, 5 * 60 * 1000);
+    },
     invalidateVaultItems: () => cache.invalidate('vault_items'),
 
     // Agents
