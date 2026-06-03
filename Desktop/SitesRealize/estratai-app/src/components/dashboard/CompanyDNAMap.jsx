@@ -166,7 +166,15 @@ export default function CompanyDNAMap({
         <button onClick={handleResetZoom} className="p-2 text-[#737373] hover:text-[#710CCD] hover:bg-[#262626] transition-colors border-l border-[#262626]" title="Resetar Visualização"><Maximize size={14} /></button>
       </div>
 
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#F2EFE9 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+      {/* Plano cartesiano - pontos (sem linhas) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(${isDark ? '#842CD5' : '#7a3fab'} 1.5px, transparent 1.5px)`,
+          backgroundSize: '35px 35px',
+          opacity: isDark ? 0.15 : 0.12
+        }}
+      />
       
       <motion.div 
         animate={{ scale: zoom }}
