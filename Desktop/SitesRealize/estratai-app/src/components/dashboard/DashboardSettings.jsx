@@ -258,24 +258,24 @@ function SecaoConta({ user }) {
         </div>
       </SettingsCard>
 
-      {/* Modal Editar Foto - Estilo Discord */}
+      {/* Modal Editar Foto - Estrat-AI Design System */}
       {showPhotoModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => !uploading && setShowPhotoModal(false)}>
-          <div className="bg-[#2C2F33] rounded-lg p-8 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => !uploading && setShowPhotoModal(false)}>
+          <div className="border border-[#262626] bg-[#101010] p-8 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-white font-bold text-lg">Editar Imagem</h2>
+            <div className="flex items-center justify-between mb-8 pb-6 border-b border-[#262626]">
+              <h2 className="font-mono text-xs uppercase tracking-widest text-[#F2EFE9] font-bold">Editar Imagem</h2>
               <button
                 onClick={() => !uploading && setShowPhotoModal(false)}
-                className="text-[#A3A3A3] hover:text-white transition-colors"
+                className="text-[#737373] hover:text-[#842CD5] transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {/* Preview Circular */}
-            <div className="flex justify-center mb-6">
-              <div className="w-48 h-48 rounded-full border-4 border-white overflow-hidden bg-[#0A0A0A] flex items-center justify-center">
+            <div className="flex justify-center mb-8">
+              <div className="w-48 h-48 rounded-full border-4 border-[#842CD5] overflow-hidden bg-[#0A0A0A] flex items-center justify-center">
                 {tempPhotoUrl ? (
                   <img src={tempPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
@@ -285,8 +285,8 @@ function SecaoConta({ user }) {
             </div>
 
             {/* Controls */}
-            <div className="flex justify-center gap-4 mb-6">
-              <label className="p-3 bg-[#202225] hover:bg-[#2C2F33] rounded-full cursor-pointer transition-colors border border-[#404249]">
+            <div className="flex justify-center gap-4 mb-8">
+              <label className="p-3 border border-[#262626] bg-[#0A0A0A] hover:border-[#842CD5] rounded-full cursor-pointer transition-colors">
                 <input
                   type="file"
                   accept="image/*"
@@ -294,16 +294,16 @@ function SecaoConta({ user }) {
                   disabled={uploading}
                   className="hidden"
                 />
-                <span className="text-[#72767D] text-xs">📁</span>
+                <span className="text-[#737373] text-xs">📁</span>
               </label>
 
               {tempPhotoUrl && (
                 <button
                   onClick={handleDeletePhoto}
                   disabled={uploading}
-                  className="p-3 bg-red-900/30 hover:bg-red-900/50 rounded-full transition-colors border border-red-500/30 disabled:opacity-50"
+                  className="p-3 border border-red-500/30 bg-red-500/10 hover:border-red-500/50 hover:bg-red-500/20 rounded-full transition-colors disabled:opacity-50"
                 >
-                  <span className="text-red-400 text-xs">🗑️</span>
+                  <span className="text-red-500 text-xs">🗑️</span>
                 </button>
               )}
             </div>
@@ -313,14 +313,14 @@ function SecaoConta({ user }) {
               <button
                 onClick={() => !uploading && setShowPhotoModal(false)}
                 disabled={uploading}
-                className="flex-1 px-4 py-2 bg-[#404249] hover:bg-[#40444B] text-white font-semibold rounded transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 border border-[#262626] bg-[#0A0A0A] text-[#F2EFE9] font-mono text-xs uppercase tracking-widest hover:border-[#842CD5] hover:text-[#842CD5] transition-colors disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleApplyPhoto}
                 disabled={uploading || !tempPhotoUrl}
-                className="flex-1 px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold rounded transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 bg-[#842CD5] text-[#0A0A0A] font-mono text-xs uppercase tracking-widest font-bold hover:bg-[#710CCD] transition-colors disabled:opacity-50"
               >
                 {uploading ? 'Salvando...' : 'Aplicar'}
               </button>
