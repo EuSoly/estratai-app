@@ -25,13 +25,22 @@ export default function DashboardInjection() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    const cached = cache.getVaultItems();
+
+    // Se tem cache válido, usa direto
+    if (cached?.data && cached.data.length > 0) {
+      setItems(cached.data);
+      return;
+    }
+
+    // Senão, valida e fetch se necessário
     (async () => {
       const shouldFetch = await validateVaultItemsTimestamp();
       if (shouldFetch) {
         await fetchVaultItems();
       }
     })();
-  }, []);
+  }, [cachedVaultItems]);
 
   const validateVaultItemsTimestamp = async () => {
     if (!cachedVaultItems?.latestUpdate) return true;
