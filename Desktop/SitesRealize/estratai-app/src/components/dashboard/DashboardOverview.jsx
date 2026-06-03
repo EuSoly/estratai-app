@@ -92,8 +92,8 @@ export default function DashboardOverview({ onSelectProject, userPlan = 'Starter
     }
     if (!itemsRes.error) {
       setVaultItems(itemsRes.data);
-      const latestUpdate = itemsRes.data?.[0]?.created_at;
-      cache.setVaultItems(itemsRes.data, latestUpdate);
+      // ⚠️ Don't cache vault_items here - let DashboardInjection manage it
+      // This prevents format conflicts (raw vs formatted)
     }
     if (!agentRes.error) {
       setAvailableAgents(agentRes.data);
