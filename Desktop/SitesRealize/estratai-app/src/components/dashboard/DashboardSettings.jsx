@@ -28,7 +28,8 @@ function SectionLabel({ children }) {
 
 function SettingsCard({ children, className = '' }) {
   return (
-    <div className={`border border-[#262626] bg-[#101010] p-6 ${className}`}>
+    <div className={`border border-[#262626] bg-[#101010] ${className}`}
+      style={{ padding: 'var(--ui-card-p)' }}>
       {children}
     </div>
   );
@@ -47,8 +48,12 @@ function InputField({ value, onChange, disabled, placeholder, type = 'text' }) {
       onChange={onChange}
       disabled={disabled}
       placeholder={placeholder}
-      className="w-full border border-[#262626] focus:border-[#842CD5] p-3 font-sans text-sm outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      style={{ backgroundColor: isDark ? '#0A0A0A' : '#FFFFFF', color: isDark ? '#F2EFE9' : '#1a1a1a' }}
+      className="w-full border border-[#262626] focus:border-[#842CD5] font-sans text-sm outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      style={{
+        backgroundColor: isDark ? '#0A0A0A' : '#FFFFFF',
+        color: isDark ? '#F2EFE9' : '#1a1a1a',
+        padding: 'var(--ui-input-p)'
+      }}
     />
   );
 }
@@ -291,14 +296,44 @@ function SecaoAparencia() {
         </p>
       </SettingsCard>
 
-      <SectionLabel>Modo Compacto</SectionLabel>
+      <SectionLabel>Densidade da Interface</SectionLabel>
       <SettingsCard>
-        <Toggle
-          enabled={prefs.compactMode}
-          onToggle={() => updatePref('compactMode', !prefs.compactMode)}
-          label="Interface Compacta"
-          description="Reduz espaçamento e aumenta densidade de informações (em desenvolvimento)."
-        />
+        <div className="flex gap-3">
+          {[
+            { id: 'spacious', label: 'Espaçada', desc: 'Confortável, muito espaço' },
+            { id: 'normal',   label: 'Normal',   desc: 'Equilibrado' },
+            { id: 'compact',  label: 'Compacta', desc: 'Compacto, mais informações' },
+          ].map(({ id, label, desc }) => (
+            <button
+              key={id}
+              onClick={() => updatePref('density', id)}
+              className="flex-1 flex flex-col items-center gap-2 py-4 px-3 border transition-all text-center"
+              style={prefs.density === id
+                ? { borderColor: '#842CD5', backgroundColor: 'rgba(132,44,213,0.05)' }
+                : { borderColor: '#262626' }
+              }
+            >
+              <span
+                className="font-mono text-[10px] uppercase tracking-widest"
+                style={{ color: prefs.density === id ? '#842CD5' : '#F2EFE9' }}
+              >
+                {label}
+              </span>
+              <span
+                className="font-sans text-[11px]"
+                style={{ color: prefs.density === id ? '#842CD5' : '#525252' }}
+              >
+                {desc}
+              </span>
+              {prefs.density === id && (
+                <span className="font-mono text-[8px] uppercase text-[#842CD5] mt-1">✓ Ativo</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <p className="font-mono text-[9px] uppercase text-[#525252] mt-4">
+          Muda o espaçamento e tamanho dos elementos em toda a interface.
+        </p>
       </SettingsCard>
 
       <SectionLabel>Animações</SectionLabel>

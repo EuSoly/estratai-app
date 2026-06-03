@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 const DEFAULT_PREFS = {
   // Aparência
   theme: 'dark', // 'dark' ou 'light'
+  density: 'spacious', // 'spacious', 'normal', 'compact'
 
   // Notificações
   emailNotifications: true,
@@ -10,8 +11,6 @@ const DEFAULT_PREFS = {
   weeklyDigest: true,
 
   // UI Preferences
-  sidebarCollapsed: false,
-  compactMode: false,
   animationsEnabled: true,
 };
 
@@ -38,6 +37,44 @@ export function useUserPreferences() {
     }
     setIsLoaded(true);
   }, []);
+
+  // Aplica densidade ao documento (CSS variables)
+  useEffect(() => {
+    const densityValues = {
+      spacious: {
+        'spacing-xs': '0.5rem',
+        'spacing-sm': '0.75rem',
+        'spacing-md': '1rem',
+        'spacing-lg': '1.5rem',
+        'spacing-xl': '2rem',
+        'card-p': '1.5rem',
+        'input-p': '0.75rem',
+      },
+      normal: {
+        'spacing-xs': '0.375rem',
+        'spacing-sm': '0.5rem',
+        'spacing-md': '0.75rem',
+        'spacing-lg': '1rem',
+        'spacing-xl': '1.5rem',
+        'card-p': '1.25rem',
+        'input-p': '0.625rem',
+      },
+      compact: {
+        'spacing-xs': '0.25rem',
+        'spacing-sm': '0.375rem',
+        'spacing-md': '0.5rem',
+        'spacing-lg': '0.75rem',
+        'spacing-xl': '1rem',
+        'card-p': '1rem',
+        'input-p': '0.5rem',
+      },
+    };
+
+    const values = densityValues[prefs.density] || densityValues.spacious;
+    Object.entries(values).forEach(([key, val]) => {
+      document.documentElement.style.setProperty(`--ui-${key}`, val);
+    });
+  }, [prefs.density]);
 
   // Sincroniza entre abas quando localStorage muda
   useEffect(() => {

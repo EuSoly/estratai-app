@@ -11,6 +11,15 @@ html {
 :root {
   --theme-x: 50vw;
   --theme-y: 50vh;
+
+  /* UI Density (padrão: spacious) */
+  --ui-spacing-xs: 0.5rem;
+  --ui-spacing-sm: 0.75rem;
+  --ui-spacing-md: 1rem;
+  --ui-spacing-lg: 1.5rem;
+  --ui-spacing-xl: 2rem;
+  --ui-card-p: 1.5rem;
+  --ui-input-p: 0.75rem;
 }
 
 ::view-transition-old(root) {
