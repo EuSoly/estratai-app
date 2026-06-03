@@ -9,10 +9,18 @@ export default function FileExplorerModal({ projectId, onClose, onLinkFile, link
   const [folderHistory, setFolderHistory] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchExplorerItems();
-  }, [currentFolderId, searchQuery, projectId, linkedFileIds]);
+  }, [currentFolderId, debouncedSearchQuery, projectId, linkedFileIds]);
 
   const fetchExplorerItems = async () => {
     try {
@@ -22,8 +30,8 @@ export default function FileExplorerModal({ projectId, onClose, onLinkFile, link
 
       let query = supabase.from('vault_items').select('*').eq('user_id', user.id);
 
-      if (searchQuery.trim() !== '') {
-        query = query.ilike('name', `%${searchQuery}%`);
+      if (debouncedSearchQuery.trim() !== '') {
+        query = query.ilike('name', `%${debouncedSearchQuery}%`);
       } else {
         if (currentFolderId) query = query.eq('parent_id', currentFolderId);
         else query = query.is('parent_id', null);

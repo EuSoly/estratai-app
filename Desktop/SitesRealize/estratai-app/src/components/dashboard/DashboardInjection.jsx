@@ -67,7 +67,9 @@ export default function DashboardInjection() {
 
   const toggleSelectAll = () => {
     const currentLevelIds = items.filter(i => i.parentId === currentFolder).map(i => i.id);
-    selectedIds.length === currentLevelIds.length ? setSelectedIds([]) : setSelectedIds(currentLevelIds);
+    const allSelected = currentLevelIds.length > 0 &&
+      currentLevelIds.every(id => selectedIds.includes(id));
+    setSelectedIds(allSelected ? [] : currentLevelIds);
   };
 
   const handleFiles = async (newFiles) => {
@@ -149,6 +151,10 @@ export default function DashboardInjection() {
         
       } else if (modalType === 'edit') {
         const item = items.find(i => i.id === selectedIds[0]);
+        if (!item) {
+          alert("Erro: item não encontrado. Pode ter sido deletado por outro usuário.");
+          return;
+        }
         const finalName = item.type === 'folder' ? inputValue : `${inputValue}.${item.type}`;
         const { error } = await supabase.from('vault_items').update({ name: finalName }).eq('id', item.id);
         actionError = error;

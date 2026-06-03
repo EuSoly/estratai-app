@@ -38,15 +38,14 @@ export default function ContextGravity({ projectId }) {
         .eq('project_id', projectId);
 
       if (error) throw error;
-      
-      const mapped = (data || [])
-        .filter(item => item.vault_items)
-        .map((item, index) => {
+
+      const filtered = (data || []).filter(item => item.vault_items);
+      const mapped = filtered.map((item, index) => {
           let nodeX = item.x ?? 0;
           let nodeY = item.y ?? 0;
-          
+
           if (nodeX === 0 && nodeY === 0) {
-            const angle = (index / data.length) * 2 * Math.PI;
+            const angle = (index / filtered.length) * 2 * Math.PI;
             const radius = 220; // Snap inicial no anel do meio para manter organização
             nodeX = Math.cos(angle) * radius;
             nodeY = Math.sin(angle) * radius;

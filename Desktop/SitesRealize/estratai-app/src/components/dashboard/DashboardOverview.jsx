@@ -56,25 +56,34 @@ export default function DashboardOverview({ onSelectProject, userPlan = 'Starter
   };
 
   const fetchMapData = async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    if (!authData?.user) return;
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData?.user) return;
 
-    const { data, error } = await supabase
-      .from('map_settings')
-      .select('*')
-      .eq('user_id', authData.user.id)
-      .limit(1)
-      .single(); 
+      const { data, error } = await supabase
+        .from('map_settings')
+        .select('*')
+        .eq('user_id', authData.user.id)
+        .limit(1)
+        .single();
 
-    if (!error && data) {
-      if (data.positions && Object.keys(data.positions).length > 0) {
-        setMapPositions(data.positions);
+      if (error) {
+        console.warn("Map settings not found or error occurred:", error.message);
+        return;
       }
-      if (data.core_name) setCoreName(data.core_name);
-      setCoreData({
-        strategyText: data.strategy_text || '',
-        linkedFiles: data.linked_files || []
-      });
+
+      if (data) {
+        if (data.positions && Object.keys(data.positions).length > 0) {
+          setMapPositions(data.positions);
+        }
+        if (data.core_name) setCoreName(data.core_name);
+        setCoreData({
+          strategyText: data.strategy_text || '',
+          linkedFiles: data.linked_files || []
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching map data:", err.message);
     }
   };
 

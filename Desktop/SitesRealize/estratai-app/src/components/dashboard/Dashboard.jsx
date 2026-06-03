@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, FileUp, Cpu, ChevronRight, Settings, LogOut } from 'lucide-react';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import DashboardOverview from './DashboardOverview';
 import DashboardInjection from './DashboardInjection';
@@ -38,11 +38,11 @@ export default function Dashboard({ onLogout, userPlan = 'Starter' }) {
   const selectedProject = isStrategyRoom ? (location.state?.project ?? null) : null;
   const activeTab = getActiveTab(location.pathname);
 
-  // Se a URL aponta para a sala de estratégia mas o state foi perdido
-  // (ex: F5 na página), redireciona para o dashboard
-  if (isStrategyRoom && !selectedProject) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  useEffect(() => {
+    if (isStrategyRoom && !selectedProject) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isStrategyRoom, selectedProject, navigate]);
 
   const handleSelectProject = (project) => {
     navigate('/dashboard/estrategia/' + project.id, { state: { project } });

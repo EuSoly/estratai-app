@@ -174,6 +174,11 @@ export default function EditorTab({ project }) {
 
   const fetchReport = async () => {
     try {
+      if (!project?.id) {
+        setReport(MOCK_REPORT);
+        return;
+      }
+
       const { data } = await supabase
         .from('projects')
         .select('report_data')
