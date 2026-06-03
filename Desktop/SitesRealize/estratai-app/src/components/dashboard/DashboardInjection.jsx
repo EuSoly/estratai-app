@@ -1,25 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { supabase } from '../../supabaseClient'; // Conexão com o Banco
-import { 
-  UploadCloud, File, FolderPlus, Search, 
-  Edit2, Trash2, ArrowUpDown, 
+import { supabase } from '../../supabaseClient';
+import { useDataCache } from '../../hooks/useDataCache';
+import config from '../../config/env';
+import {
+  UploadCloud, File, FolderPlus, Search,
+  Edit2, Trash2, ArrowUpDown,
   Folder, ArrowLeft, X, AlertTriangle, Info, MoveRight, CheckSquare, Square, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardInjection() {
-  const [items, setItems] = useState([]);
+  const cache = useDataCache();
+
+  const [items, setItems] = useState(() => cache.getVaultItems() || []);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentFolder, setCurrentFolder] = useState(null);
   const [sortConfig, setSortOrder] = useState({ key: 'date', direction: 'desc' });
-  const [modalType, setModalType] = useState(null); 
+  const [modalType, setModalType] = useState(null);
   const [inputValue, setInputValue] = useState('');
 
   const fileInputRef = useRef(null);
 
-  // --- 1. ENGENHARIA DE BANCO DE DADOS (SUPABASE) ---
   useEffect(() => {
     fetchVaultItems();
   }, []);
@@ -36,7 +39,7 @@ export default function DashboardInjection() {
     }
 
     const formattedData = data.map(dbItem => ({
-      id: dbItem.id, 
+      id: dbItem.id,
       name: dbItem.name,
       type: dbItem.type,
       size: dbItem.size,
@@ -45,6 +48,7 @@ export default function DashboardInjection() {
     }));
 
     setItems(formattedData);
+    cache.setVaultItems(formattedData);
   };
 
   // --- 2. ENGENHARIA DE RASTREAMENTO DE CAMINHO ---
@@ -73,9 +77,8 @@ export default function DashboardInjection() {
   };
 
   const handleFiles = async (newFiles) => {
-    const ALLOWED_TYPES = ['pdf', 'docx', 'pptx', 'xlsx', 'csv', 'txt'];
-    const MAX_SIZE_MB = 20;
-    
+    const { allowedTypes, maxSizeMB } = config.fileUpload;
+
     const validFiles = [];
     const rejectedFiles = [];
 
@@ -83,7 +86,7 @@ export default function DashboardInjection() {
       const extension = file.name.split('.').pop().toLowerCase();
       const sizeMB = file.size / (1024 * 1024);
 
-      if (ALLOWED_TYPES.includes(extension) && sizeMB <= MAX_SIZE_MB) {
+      if (allowedTypes.includes(extension) && sizeMB <= maxSizeMB) {
         validFiles.push(file);
       } else {
         rejectedFiles.push(file.name);
@@ -91,7 +94,7 @@ export default function DashboardInjection() {
     });
 
     if (rejectedFiles.length > 0) {
-      alert(`⚠️ BLOQUEIO DE SEGURANÇA STRATAI\n\nOs seguintes arquivos foram bloqueados por formato não suportado ou tamanho excedido (Max 20MB):\n- ${rejectedFiles.join('\n- ')}\n\nFormatos permitidos: ${ALLOWED_TYPES.join(', ').toUpperCase()}`);
+      alert(`⚠️ BLOQUEIO DE SEGURANÇA ESTRATAI\n\nOs seguintes arquivos foram bloqueados por formato não suportado ou tamanho excedido (Max ${maxSizeMB}MB):\n- ${rejectedFiles.join('\n- ')}\n\nFormatos permitidos: ${allowedTypes.join(', ').toUpperCase()}`);
     }
 
     if (validFiles.length === 0) return;
@@ -115,12 +118,13 @@ export default function DashboardInjection() {
     }));
 
     const { error } = await supabase.from('vault_items').insert(newInserts);
-    
+
     if (error) {
       console.error("🔥 ERRO SUPABASE (UPLOAD):", error);
       alert(`Erro no banco: ${error.message}`);
     } else {
-      fetchVaultItems(); 
+      cache.invalidateVaultItems();
+      fetchVaultItems();
     }
   };
 
@@ -195,8 +199,9 @@ export default function DashboardInjection() {
         console.error(`🔥 ERRO SUPABASE (${modalType.toUpperCase()}):`, actionError);
         alert(`Falha na operação:\n${actionError.message}`);
       } else {
-        await fetchVaultItems(); // Recarrega os dados fresquinhos
-        setSelectedIds([]); 
+        cache.invalidateVaultItems();
+        await fetchVaultItems();
+        setSelectedIds([]);
         closeModal();
       }
       

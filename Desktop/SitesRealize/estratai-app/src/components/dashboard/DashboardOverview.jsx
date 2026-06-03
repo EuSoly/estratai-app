@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Plus, Activity, CheckCircle2, AlertTriangle, Sliders } from 'lucide-react';
+import { useDataCache } from '../../hooks/useDataCache';
 import CompanyDNAMap from './CompanyDNAMap'; 
 
 import ModalCoreDNA from './modals/ModalCoreDNA';
@@ -11,15 +12,17 @@ import ModalCreateProject from './modals/ModalCreateProject';
 import { PLAN_LEVELS } from '../../constants/plans';
 
 export default function DashboardOverview({ onSelectProject, userPlan = 'Starter' }) {
-  const [projects, setProjects] = useState([]);
-  const [vaultItems, setVaultItems] = useState([]); 
-  const [availableAgents, setAvailableAgents] = useState([]);
-  const [projectFilesLinks, setProjectFilesLinks] = useState([]); 
-  
+  const cache = useDataCache();
+
+  const [projects, setProjects] = useState(() => cache.getProjects() || []);
+  const [vaultItems, setVaultItems] = useState(() => cache.getVaultItems() || []);
+  const [availableAgents, setAvailableAgents] = useState(() => cache.getAgents() || []);
+  const [projectFilesLinks, setProjectFilesLinks] = useState(() => cache.getProjectFiles() || []);
+
   const [isCreating, setIsCreating] = useState(false);
   const [step, setStep] = useState(1);
   const [newProject, setNewProject] = useState({ name: '', files: [], agent: null });
-  
+
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
 
@@ -31,28 +34,39 @@ export default function DashboardOverview({ onSelectProject, userPlan = 'Starter
 
   const [mapPositions, setMapPositions] = useState({});
   const [coreName, setCoreName] = useState('CORE_DNA');
-  
+
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  useEffect(() => { 
+  useEffect(() => {
     Promise.all([fetchData(), fetchMapData()]).then(() => {
       setIsMapLoaded(true);
     });
   }, []);
 
   const fetchData = async () => {
-    // O RLS do Supabase vai automaticamente filtrar apenas os dados do utilizador logado aqui!
     const [projRes, itemsRes, agentRes, pfRes] = await Promise.all([
       supabase.from('projects').select('*').order('created_at', { ascending: false }),
       supabase.from('vault_items').select('*').order('created_at', { ascending: false }),
       supabase.from('agents').select('*').eq('is_active', true).order('created_at', { ascending: true }),
-      supabase.from('project_files').select('*') 
+      supabase.from('project_files').select('*')
     ]);
 
-    if (!projRes.error) setProjects(projRes.data);
-    if (!itemsRes.error) setVaultItems(itemsRes.data);
-    if (!agentRes.error) setAvailableAgents(agentRes.data);
-    if (!pfRes.error) setProjectFilesLinks(pfRes.data);
+    if (!projRes.error) {
+      setProjects(projRes.data);
+      cache.setProjects(projRes.data);
+    }
+    if (!itemsRes.error) {
+      setVaultItems(itemsRes.data);
+      cache.setVaultItems(itemsRes.data);
+    }
+    if (!agentRes.error) {
+      setAvailableAgents(agentRes.data);
+      cache.setAgents(agentRes.data);
+    }
+    if (!pfRes.error) {
+      setProjectFilesLinks(pfRes.data);
+      cache.setProjectFiles(pfRes.data);
+    }
   };
 
   const fetchMapData = async () => {
@@ -131,7 +145,10 @@ export default function DashboardOverview({ onSelectProject, userPlan = 'Starter
 
   const handleRenameProject = async (id, newName) => {
     const { error } = await supabase.from('projects').update({ name: newName }).eq('id', id);
-    if (!error) fetchData(); 
+    if (!error) {
+      cache.invalidateProjects();
+      fetchData();
+    }
   };
 
   const toggleFileSelection = (id, type) => {
@@ -182,6 +199,7 @@ export default function DashboardOverview({ onSelectProject, userPlan = 'Starter
         if (error) throw error;
       }
 
+      cache.invalidateProjectFiles();
       setManagingFilesProject(null);
       fetchData();
     } catch (error) {
@@ -206,17 +224,21 @@ export default function DashboardOverview({ onSelectProject, userPlan = 'Starter
 
       if (!error && data) {
         const projectId = data[0].id;
-        
-        // 🔥 INJEÇÃO DE SEGURANÇA AQUI TAMBÉM
-        const fileLinks = newProject.files.map(fId => ({ 
-          project_id: projectId, 
+
+        const fileLinks = newProject.files.map(fId => ({
+          project_id: projectId,
           file_id: fId,
-          user_id: authData.user.id 
+          user_id: authData.user.id
         }));
-        
+
         await supabase.from('project_files').insert(fileLinks);
-        
-        setIsCreating(false); setStep(1); setNewProject({ name: '', files: [], agent: null }); fetchData();
+
+        cache.invalidateProjects();
+        cache.invalidateProjectFiles();
+        setIsCreating(false);
+        setStep(1);
+        setNewProject({ name: '', files: [], agent: null });
+        fetchData();
       } else {
         console.error("Erro ao criar projeto Multi-Tenant:", error);
       }
@@ -226,7 +248,13 @@ export default function DashboardOverview({ onSelectProject, userPlan = 'Starter
   const handleDeleteProject = async () => {
     if (projectToDelete && deleteConfirmationText === projectToDelete.name) {
       const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
-      if (!error) { setProjectToDelete(null); setDeleteConfirmationText(''); fetchData(); }
+      if (!error) {
+        cache.invalidateProjects();
+        cache.invalidateProjectFiles();
+        setProjectToDelete(null);
+        setDeleteConfirmationText('');
+        fetchData();
+      }
     }
   };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Lock, ArrowRight } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { supabase } from '../../supabaseClient';
+import { useDataCache } from '../../hooks/useDataCache';
 import { PLAN_LEVELS, getPlanColor } from '../../constants/plans';
 
 function PlanBadge({ plan, muted = false }) {
@@ -20,8 +21,11 @@ function PlanBadge({ plan, muted = false }) {
 }
 
 export default function DashboardAgents({ userPlan = 'Starter' }) {
-  const [agentes, setAgentes] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const cache = useDataCache();
+  const cachedAgents = cache.getAgents();
+
+  const [agentes, setAgentes] = useState(cachedAgents || []);
+  const [isLoading, setIsLoading] = useState(!cachedAgents);
 
   useEffect(() => {
     async function fetchAgents() {
@@ -34,6 +38,7 @@ export default function DashboardAgents({ userPlan = 'Starter' }) {
 
         if (error) throw error;
         setAgentes(data);
+        cache.setAgents(data);
       } catch (error) {
         console.error("Erro ao buscar matriz de agentes:", error.message);
       } finally {
@@ -41,7 +46,9 @@ export default function DashboardAgents({ userPlan = 'Starter' }) {
       }
     }
 
-    fetchAgents();
+    if (!cachedAgents) {
+      fetchAgents();
+    }
   }, []);
 
   if (isLoading) {
