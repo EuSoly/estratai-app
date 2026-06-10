@@ -821,45 +821,109 @@ export default function EditorTab({ project }) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20, transition: { duration: 0.2 } }}
-              className="lg:sticky lg:top-6 self-start border border-[var(--color-plan-30)] bg-[#101010] flex flex-col shadow-2xl "
+              className="lg:sticky lg:top-6 self-start border border-[var(--color-plan-30)] bg-[#101010] flex flex-col shadow-2xl"
             >
+              {/* header */}
               <div className="border-b border-[#262626] p-4 flex items-center justify-between bg-[#0A0A0A]">
                 <div className="flex items-center gap-2">
                   <Sparkles size={14} className="text-[var(--color-plan)]" />
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#F2EFE9]">Copiloto Neural</span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#F2EFE9]">
+                    Copiloto — {SECTION_NAMES[aiPanel?.section]}
+                  </span>
                 </div>
-                <button onClick={closeAiPanel} className="text-[#737373] hover:text-[var(--color-plan)]">
+                <button type="button" onClick={closeAiPanel} className="text-[#737373] hover:text-[var(--color-plan)]">
                   <X size={14} />
                 </button>
               </div>
 
               <div className="p-5 space-y-5">
+                {/* quick actions */}
                 <div>
-                  <p className="font-mono text-[9px] uppercase text-[#737373] mb-2">Trecho selecionado:</p>
-                  <p className="border-l-2 border-[#262626] pl-3 text-xs text-[#525252] italic line-clamp-4 font-sans leading-relaxed">
-                    {aiPanel.content}
-                  </p>
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-[#737373] mb-3">Ações Rápidas</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(COPILOT_ACTIONS[aiPanel?.section] || []).map(action => (
+                      <button
+                        key={action}
+                        type="button"
+                        onClick={() => { setAiPrompt(action); handleAiAction(action); }}
+                        disabled={isProcessingAI}
+                        className="font-mono text-[9px] uppercase tracking-widest text-[var(--color-plan)] border border-[var(--color-plan-30)] bg-[var(--color-plan-05)] hover:bg-[var(--color-plan-10)] px-2.5 py-1.5 transition-all disabled:opacity-40"
+                      >
+                        {action}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
+                {/* prompt livre */}
                 <div>
-                  <label className="font-mono text-[10px] uppercase text-[#F2EFE9] block mb-2">Instrução de refinamento:</label>
-                  <textarea
-                    value={aiPrompt}
-                    onChange={e => setAiPrompt(e.target.value)}
-                    placeholder="Ex: Tom mais direto e orientado a dados..."
-                    className="w-full bg-[#0A0A0A] border border-[#262626] text-[#F2EFE9] p-3 font-sans text-xs focus:border-[var(--color-plan)] outline-none resize-none min-h-[100px]"
-                  />
+                  <label className="font-mono text-[9px] uppercase tracking-widest text-[#737373] block mb-2">
+                    Instrução personalizada
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      value={aiPrompt}
+                      onChange={e => setAiPrompt(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAiAction(aiPrompt)}
+                      placeholder="Ex: Tom mais direto e orientado a dados..."
+                      disabled={isProcessingAI}
+                      className="flex-1 bg-[#0A0A0A] border border-[#262626] text-[#F2EFE9] px-3 py-2 font-mono text-[10px] focus:border-[var(--color-plan)] outline-none disabled:opacity-40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAiAction(aiPrompt)}
+                      disabled={isProcessingAI || !aiPrompt}
+                      className="bg-[var(--color-plan)] text-[#0A0A0A] px-3 font-mono text-[10px] font-bold hover:bg-[#710CCD] transition-colors disabled:opacity-40 shrink-0"
+                    >
+                      {isProcessingAI ? <RefreshCw size={12} className="animate-spin" /> : '→'}
+                    </button>
+                  </div>
                 </div>
 
-                <button
-                  onClick={() => handleAiAction(aiPrompt)}
-                  disabled={isProcessingAI || !aiPrompt}
-                  className="w-full bg-[var(--color-plan)] text-[#0A0A0A] py-3 font-mono text-[10px] uppercase tracking-widest font-bold hover:bg-[#710CCD] transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
-                >
-                  {isProcessingAI
-                    ? <><RefreshCw size={13} className="animate-spin" /> Processando...</>
-                    : <><Sparkles size={13} /> Executar Refinamento</>}
-                </button>
+                {/* estado de processamento */}
+                {isProcessingAI && (
+                  <div className="flex items-center gap-2 text-[#525252] font-mono text-[9px] uppercase tracking-widest">
+                    <RefreshCw size={11} className="animate-spin" />
+                    Processando...
+                  </div>
+                )}
+
+                {/* rascunho editável */}
+                {aiDraft && !isProcessingAI && (
+                  <div className="space-y-3">
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-[var(--color-plan)]">
+                      Rascunho — edite antes de aplicar
+                    </p>
+                    <textarea
+                      value={aiDraft}
+                      onChange={e => setAiDraft(e.target.value)}
+                      className="w-full bg-[#0A0A0A] border border-[#262626] text-[#F2EFE9] p-3 font-sans text-xs focus:border-[var(--color-plan)] outline-none resize-none min-h-[140px]"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={applyAiDraft}
+                        disabled={aiPanel?.section === 'swot'}
+                        className="flex-1 bg-[var(--color-plan)] text-[#0A0A0A] py-2 font-mono text-[9px] uppercase tracking-widest font-bold hover:bg-[#710CCD] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={aiPanel?.section === 'swot' ? 'SWOT é estruturado — edite manualmente a seção' : undefined}
+                      >
+                        Aplicar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAiDraft('')}
+                        className="px-4 border border-[#262626] text-[#737373] font-mono text-[9px] uppercase tracking-widest hover:text-[#F2EFE9] transition-colors"
+                      >
+                        Descartar
+                      </button>
+                    </div>
+                    {aiPanel?.section === 'swot' && (
+                      <p className="font-mono text-[9px] text-[#525252]">
+                        SWOT é estruturado — use como referência e edite manualmente os quadrantes.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
