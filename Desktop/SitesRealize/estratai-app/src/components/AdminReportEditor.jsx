@@ -13,6 +13,12 @@ export default function AdminReportEditor() {
 
   useEffect(() => {
     async function load() {
+      if (!ADMIN_ID) {
+        console.error('[AdminReportEditor] VITE_ADMIN_USER_ID não está configurado no .env');
+        navigate('/');
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user || user.id !== ADMIN_ID) {
