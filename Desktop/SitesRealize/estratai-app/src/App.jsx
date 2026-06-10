@@ -14,18 +14,22 @@ import Footer from './components/LandingPage/Footer';
 import Dashboard from './components/dashboard/Dashboard';
 import AuthScreen from './components/Auth/AuthScreen';
 import { PlanColorProvider } from './contexts/PlanContext';
+import { useTheme } from './contexts/ThemeContext';
 import ExportPage from './components/StrategyRoom/ExportPage';
+import AdminReportEditor from './components/AdminReportEditor';
 
 function LandingPage({ onLoginClick, isLoggedIn }) {
   const { scrollYProgress } = useScroll();
   const gridY = useTransform(scrollYProgress, [0, 1], ['0%', '-20%']);
   const textY = useTransform(scrollYProgress, [0, 1], ['-10%', '20%']);
+  const { isDark } = useTheme();
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-[#F2EFE9] font-sans selection:bg-[#842CD5] selection:text-[#0A0A0A] relative">
       <motion.div
         style={{ y: textY }}
-        className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.01] overflow-hidden"
+        style={{ opacity: isDark ? 0.012 : 0.035 }}
+        className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden"
       >
         <span className="font-serif font-black text-[25vw] leading-none whitespace-nowrap text-[#F2EFE9] select-none">
           Estrat-AI
@@ -35,10 +39,13 @@ function LandingPage({ onLoginClick, isLoggedIn }) {
       <motion.div
         style={{
           y: gridY,
-          backgroundImage: 'linear-gradient(#262626 1px, transparent 1px), linear-gradient(90deg, #262626 1px, transparent 1px)',
-          backgroundSize: '120px 120px'
+          backgroundImage: isDark
+            ? 'linear-gradient(#262626 1px, transparent 1px), linear-gradient(90deg, #262626 1px, transparent 1px)'
+            : 'linear-gradient(#C8C5BF 1px, transparent 1px), linear-gradient(90deg, #C8C5BF 1px, transparent 1px)',
+          backgroundSize: '120px 120px',
+          opacity: isDark ? 0.35 : 0.35
         }}
-        className="fixed -top-[50%] left-0 right-0 h-[200%] pointer-events-none z-0 opacity-40"
+        className="fixed -top-[50%] left-0 right-0 h-[200%] pointer-events-none z-0"
       />
 
       <div
@@ -143,6 +150,12 @@ export default function App() {
         <Route
           path="/relatorio/:id"
           element={session ? <ExportPage /> : <Navigate to="/" replace />}
+        />
+
+        {/* ROTA ADMIN WOZ — TEMPORÁRIA */}
+        <Route
+          path="/admin/:projectId"
+          element={session ? <AdminReportEditor /> : <Navigate to="/" replace />}
         />
 
         {/* Qualquer outra URL volta para a raiz */}
