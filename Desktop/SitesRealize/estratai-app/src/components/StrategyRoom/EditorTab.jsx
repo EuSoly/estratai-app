@@ -454,18 +454,11 @@ export default function EditorTab({ project }) {
           </div>
 
           {/* ── 01 SUMÁRIO EXECUTIVO ─────────────────────────────────────────────── */}
-          <div className="group border border-[#262626] bg-[#101010] p-8">
-            <div className="flex items-start justify-between mb-6">
-              <SectionLabel>01 // Diagnóstico Executivo</SectionLabel>
-              {!isEditing && (
-                <button
-                  onClick={() => setAiPanel({ section: 'executiveSummary', content: report.executiveSummary })}
-                  className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 font-mono text-[9px] uppercase text-[var(--color-plan)] bg-[var(--color-plan-10)] border border-[var(--color-plan-30)] px-3 py-1.5 transition-all hover:bg-[var(--color-plan-20)] shrink-0 ml-4"
-                >
-                  <Sparkles size={11} /> Re-analisar com IA
-                </button>
-              )}
-            </div>
+          <SectionCard
+            label="01 // Diagnóstico Executivo"
+            isEditing={isEditing}
+            onCopilot={() => setAiPanel({ section: 'executiveSummary' })}
+          >
             {isEditing ? (
               <textarea
                 value={report.executiveSummary || ''}
@@ -477,11 +470,15 @@ export default function EditorTab({ project }) {
                 {report.executiveSummary}
               </p>
             )}
-          </div>
+          </SectionCard>
 
           {/* ── 02 SWOT ──────────────────────────────────────────────────────────── */}
-          <div className="border border-[#262626] bg-[#101010] p-8">
-            <SectionLabel>02 // Matriz de Diagnóstico SWOT</SectionLabel>
+          <SectionCard
+            label="02 // Análise SWOT"
+            subtitle="4 quadrantes"
+            isEditing={isEditing}
+            onCopilot={() => setAiPanel({ section: 'swot' })}
+          >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {SWOT_CONFIG.map(({ key, label, Icon, accent }) => (
                 <div
@@ -529,11 +526,15 @@ export default function EditorTab({ project }) {
                 </div>
               ))}
             </div>
-          </div>
+          </SectionCard>
 
           {/* ── 03 RISCOS ────────────────────────────────────────────────────────── */}
-          <div className="border border-[#262626] bg-[#101010] p-8">
-            <SectionLabel>03 // Vetores de Risco Ativos</SectionLabel>
+          <SectionCard
+            label="03 // Vetores de Risco"
+            subtitle={`${(report.risks || []).length} vetores`}
+            isEditing={isEditing}
+            onCopilot={() => setAiPanel({ section: 'risks' })}
+          >
             <div className="space-y-3">
               {(report.risks || []).map(risk => {
                 const cfg = SEVERITY_CONFIG[risk.severity] || SEVERITY_CONFIG.low;
@@ -613,11 +614,15 @@ export default function EditorTab({ project }) {
                 <Plus size={13} /> Adicionar Risco
               </button>
             )}
-          </div>
+          </SectionCard>
 
           {/* ── 04 PLANO DE AÇÃO ─────────────────────────────────────────────────── */}
-          <div className="border border-[#262626] bg-[#101010] p-8">
-            <SectionLabel>04 // Plano de Ação Tático</SectionLabel>
+          <SectionCard
+            label="04 // Plano de Ação"
+            subtitle={`${(report.actionPlan || []).length} ações`}
+            isEditing={isEditing}
+            onCopilot={() => setAiPanel({ section: 'actionPlan' })}
+          >
             <div className="space-y-3">
               {(report.actionPlan || []).map((item, i) => (
                 <div
@@ -700,11 +705,15 @@ export default function EditorTab({ project }) {
                 <Plus size={13} /> Adicionar Ação
               </button>
             )}
-          </div>
+          </SectionCard>
 
           {/* ── 05 INSIGHTS ──────────────────────────────────────────────────────── */}
-          <div className="border border-[#262626] bg-[#101010] p-8">
-            <SectionLabel>05 // Insights Estratégicos</SectionLabel>
+          <SectionCard
+            label="05 // Insights Estratégicos"
+            subtitle={`${insights.length} insights`}
+            isEditing={isEditing}
+            onCopilot={() => setAiPanel({ section: 'insights' })}
+          >
             <div className="space-y-2">
               {insights.map((insight, i) => (
                 <div key={i}>
@@ -801,7 +810,7 @@ export default function EditorTab({ project }) {
                 <Plus size={13} /> Adicionar Insight
               </button>
             )}
-          </div>
+          </SectionCard>
 
         </div>
 
