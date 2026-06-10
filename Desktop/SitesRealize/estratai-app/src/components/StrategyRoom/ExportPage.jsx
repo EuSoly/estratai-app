@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import {
   Printer, RefreshCw, Check,
@@ -111,6 +111,7 @@ function ScoreBlock({ score }) {
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function ExportPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [report, setReport]           = useState(null);
   const [projectName, setProjectName] = useState('');
   const [loading, setLoading]         = useState(true);
@@ -122,20 +123,24 @@ export default function ExportPage() {
 
   const fetchData = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate('/'); return; }
+
       const { data } = await supabase
         .from('projects')
         .select('name, report_data')
         .eq('id', id)
+        .eq('user_id', user.id)
         .single();
 
-      if (data) {
-        setProjectName(data.name || 'Projeto');
-        setReport(data.report_data && Object.keys(data.report_data).length > 0
-          ? data.report_data
-          : MOCK_REPORT);
-      }
+      if (!data) { navigate('/dashboard'); return; }
+
+      setProjectName(data.name || 'Projeto');
+      setReport(data.report_data && Object.keys(data.report_data).length > 0
+        ? data.report_data
+        : MOCK_REPORT);
     } catch {
-      setReport(MOCK_REPORT);
+      navigate('/dashboard');
     } finally {
       setLoading(false);
     }
@@ -167,11 +172,40 @@ export default function ExportPage() {
       {/* ── CSS de impressão ─────────────────────────────────────────────────── */}
       <style>{`
         @media print {
+          /* ── layout ──────────────────────────────────────────────────────── */
           .no-print { display: none !important; }
-          body { margin: 0; background: #0A0A0A; }
-          .print-main { padding: 0 !important; }
+          @page { size: A4; margin: 15mm; }
           * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-          @page { margin: 12mm; }
+
+          /* ── backgrounds → branco (só classes Tailwind — inline styles preservados) */
+          body { margin: 0; background: #ffffff !important; }
+          .print-main { padding: 24px !important; background: #ffffff !important; border: 1px solid #222222 !important; }
+          .print-main .bg-\\[\\#0A0A0A\\],
+          .print-main .bg-\\[\\#101010\\],
+          .print-main .bg-\\[\\#050505\\] { background-color: #ffffff !important; }
+
+          /* score bar track */
+          .print-main .bg-\\[\\#1a1a1a\\] { background-color: #e5e7eb !important; }
+
+          /* barra roxa da marca nos section labels */
+          .print-main .w-1.h-4 { background-color: #842CD5 !important; }
+
+          /* ── texto → sem !important (inline color styles vencem naturalmente) */
+          .print-main .text-\\[\\#F2EFE9\\] { color: #111111; }
+          .print-main .text-\\[\\#A3A3A3\\] { color: #444444; }
+          .print-main .text-\\[\\#737373\\] { color: #555555; }
+          .print-main .text-\\[\\#525252\\] { color: #777777; }
+          .print-main .text-\\[\\#0A0A0A\\] { color: #111111; }
+
+          /* número decorativo do plano de ação — ghost no branco */
+          .print-main .text-\\[\\#262626\\] { color: #e5e7eb; }
+
+          /* ── bordas → cinza claro ───────────────────────────────────────── */
+          .print-main .border-\\[\\#262626\\] { border-color: #d1d5db; }
+          .print-main .border { border-color: #d1d5db; }
+
+          /* quebra de página entre seções */
+          .print-main .break-inside-avoid { break-inside: avoid; }
         }
       `}</style>
 
