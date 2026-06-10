@@ -207,6 +207,7 @@ export default function EditorTab({ project }) {
   const [isSaving, setIsSaving]             = useState(false);
   const [aiPanel, setAiPanel]               = useState(null);
   const [aiPrompt, setAiPrompt]             = useState('');
+  const [aiDraft, setAiDraft]               = useState('');
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [report, setReport]                 = useState(null);
   const [expandedInsight, setExpandedInsight] = useState(null);
@@ -247,17 +248,36 @@ export default function EditorTab({ project }) {
     setExpandedInsight(null);
   };
 
-  const handleAiRewrite = () => {
-    if (!aiPrompt || !aiPanel) return;
+  const handleAiAction = (prompt) => {
+    if (!prompt || !aiPanel) return;
     setIsProcessingAI(true);
+    setAiDraft('');
     setTimeout(() => {
-      if (aiPanel.section === 'executiveSummary') {
-        setReport(r => ({ ...r, executiveSummary: `[IA: ${aiPrompt}]\n\n${r.executiveSummary}` }));
-      }
+      setAiDraft(`Sugestão do Copiloto para "${SECTION_NAMES[aiPanel.section]}":\n\n${prompt}\n\n[Conteúdo gerado. Edite conforme necessário antes de aplicar.]`);
       setIsProcessingAI(false);
-      setAiPanel(null);
-      setAiPrompt('');
     }, 2000);
+  };
+
+  const applyAiDraft = () => {
+    if (!aiDraft || !aiPanel) return;
+    const { section } = aiPanel;
+    if (section === 'executiveSummary') {
+      setReport(r => ({ ...r, executiveSummary: aiDraft }));
+    } else if (section === 'insights') {
+      setReport(r => ({ ...r, insights: [...(r.insights || []).map(toInsightObj), { text: aiDraft, detail: '', sources: [] }] }));
+    } else if (section === 'risks') {
+      const newId = Math.max(0, ...(report.risks || []).map(r => r.id)) + 1;
+      setReport(r => ({ ...r, risks: [...(r.risks || []), { id: newId, severity: 'medium', title: 'Sugestão IA', description: aiDraft }] }));
+    } else if (section === 'actionPlan') {
+      setReport(r => ({ ...r, actionPlan: [...(r.actionPlan || []), { priority: (r.actionPlan?.length || 0) + 1, action: aiDraft, deadline: '', owner: '' }] }));
+    }
+    closeAiPanel();
+  };
+
+  const closeAiPanel = () => {
+    setAiPanel(null);
+    setAiPrompt('');
+    setAiDraft('');
   };
 
   // ── SWOT helpers ──────────────────────────────────────────────────────────
