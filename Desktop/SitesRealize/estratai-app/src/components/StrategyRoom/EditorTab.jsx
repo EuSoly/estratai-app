@@ -184,8 +184,9 @@ function SectionCard({ label, subtitle, isEditing, onCopilot, children }) {
             <span className="font-mono text-[9px] text-[#525252] tracking-widest">{subtitle}</span>
           )}
         </div>
-        {!isEditing && (
+        {!isEditing && onCopilot && (
           <button
+            type="button"
             onClick={onCopilot}
             className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-widest text-[var(--color-plan)] hover:bg-[var(--color-plan-10)] border border-transparent hover:border-[var(--color-plan-30)] px-2.5 py-1.5 transition-all shrink-0"
           >
