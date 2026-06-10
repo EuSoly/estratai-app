@@ -843,7 +843,7 @@ export default function EditorTab({ project }) {
                 </div>
 
                 <button
-                  onClick={handleAiRewrite}
+                  onClick={() => handleAiAction(aiPrompt)}
                   disabled={isProcessingAI || !aiPrompt}
                   className="w-full bg-[var(--color-plan)] text-[#0A0A0A] py-3 font-mono text-[10px] uppercase tracking-widest font-bold hover:bg-[#710CCD] transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
                 >
