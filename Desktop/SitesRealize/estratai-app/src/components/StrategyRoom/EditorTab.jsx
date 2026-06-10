@@ -819,7 +819,7 @@ export default function EditorTab({ project }) {
                   <Sparkles size={14} className="text-[var(--color-plan)]" />
                   <span className="font-mono text-[10px] uppercase tracking-widest text-[#F2EFE9]">Copiloto Neural</span>
                 </div>
-                <button onClick={() => { setAiPanel(null); setAiPrompt(''); }} className="text-[#737373] hover:text-[var(--color-plan)]">
+                <button onClick={closeAiPanel} className="text-[#737373] hover:text-[var(--color-plan)]">
                   <X size={14} />
                 </button>
               </div>
