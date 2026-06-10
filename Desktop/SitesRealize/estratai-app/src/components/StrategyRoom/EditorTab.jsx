@@ -266,8 +266,10 @@ export default function EditorTab({ project }) {
     } else if (section === 'insights') {
       setReport(r => ({ ...r, insights: [...(r.insights || []).map(toInsightObj), { text: aiDraft, detail: '', sources: [] }] }));
     } else if (section === 'risks') {
-      const newId = Math.max(0, ...(report.risks || []).map(r => r.id)) + 1;
-      setReport(r => ({ ...r, risks: [...(r.risks || []), { id: newId, severity: 'medium', title: 'Sugestão IA', description: aiDraft }] }));
+      setReport(r => {
+        const newId = Math.max(0, ...(r.risks || []).map(risk => risk.id)) + 1;
+        return { ...r, risks: [...(r.risks || []), { id: newId, severity: 'medium', title: 'Sugestão IA', description: aiDraft }] };
+      });
     } else if (section === 'actionPlan') {
       setReport(r => ({ ...r, actionPlan: [...(r.actionPlan || []), { priority: (r.actionPlan?.length || 0) + 1, action: aiDraft, deadline: '', owner: '' }] }));
     }
