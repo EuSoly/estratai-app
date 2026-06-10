@@ -280,6 +280,12 @@ export default function EditorTab({ project }) {
     setAiDraft('');
   };
 
+  const openAiPanel = (section) => {
+    setAiPanel({ section });
+    setAiPrompt('');
+    setAiDraft('');
+  };
+
   // ── SWOT helpers ──────────────────────────────────────────────────────────
   const addSwotItem    = (key) =>
     setReport(r => ({ ...r, swot: { ...r.swot, [key]: [...(r.swot[key] || []), ''] } }));
@@ -457,7 +463,7 @@ export default function EditorTab({ project }) {
           <SectionCard
             label="01 // Diagnóstico Executivo"
             isEditing={isEditing}
-            onCopilot={() => setAiPanel({ section: 'executiveSummary' })}
+            onCopilot={() => openAiPanel('executiveSummary')}
           >
             {isEditing ? (
               <textarea
@@ -477,7 +483,7 @@ export default function EditorTab({ project }) {
             label="02 // Análise SWOT"
             subtitle="4 quadrantes"
             isEditing={isEditing}
-            onCopilot={() => setAiPanel({ section: 'swot' })}
+            onCopilot={() => openAiPanel('swot')}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {SWOT_CONFIG.map(({ key, label, Icon, accent }) => (
@@ -533,7 +539,7 @@ export default function EditorTab({ project }) {
             label="03 // Vetores de Risco"
             subtitle={`${(report.risks || []).length} vetores`}
             isEditing={isEditing}
-            onCopilot={() => setAiPanel({ section: 'risks' })}
+            onCopilot={() => openAiPanel('risks')}
           >
             <div className="space-y-3">
               {(report.risks || []).map(risk => {
@@ -621,7 +627,7 @@ export default function EditorTab({ project }) {
             label="04 // Plano de Ação"
             subtitle={`${(report.actionPlan || []).length} ações`}
             isEditing={isEditing}
-            onCopilot={() => setAiPanel({ section: 'actionPlan' })}
+            onCopilot={() => openAiPanel('actionPlan')}
           >
             <div className="space-y-3">
               {(report.actionPlan || []).map((item, i) => (
@@ -712,7 +718,7 @@ export default function EditorTab({ project }) {
             label="05 // Insights Estratégicos"
             subtitle={`${insights.length} insights`}
             isEditing={isEditing}
-            onCopilot={() => setAiPanel({ section: 'insights' })}
+            onCopilot={() => openAiPanel('insights')}
           >
             <div className="space-y-2">
               {insights.map((insight, i) => (
@@ -879,14 +885,6 @@ export default function EditorTab({ project }) {
                     </button>
                   </div>
                 </div>
-
-                {/* estado de processamento */}
-                {isProcessingAI && (
-                  <div className="flex items-center gap-2 text-[#525252] font-mono text-[9px] uppercase tracking-widest">
-                    <RefreshCw size={11} className="animate-spin" />
-                    Processando...
-                  </div>
-                )}
 
                 {/* rascunho editável */}
                 {aiDraft && !isProcessingAI && (
