@@ -118,6 +118,22 @@ const SWOT_CONFIG = [
   { key: 'threats',       label: 'Ameaças',       Icon: ShieldAlert,  accent: '#f97316' },
 ];
 
+const SECTION_NAMES = {
+  executiveSummary: 'Diagnóstico Executivo',
+  swot:             'Análise SWOT',
+  risks:            'Vetores de Risco',
+  actionPlan:       'Plano de Ação',
+  insights:         'Insights Estratégicos',
+};
+
+const COPILOT_ACTIONS = {
+  executiveSummary: ['Re-gerar diagnóstico', 'Aprofundar contexto', 'Simplificar linguagem'],
+  swot:             ['Aprofundar forças', 'Ameaças ocultas', 'Cruzar fraquezas × riscos', 'Re-gerar quadrante'],
+  risks:            ['Riscos ocultos', 'Re-avaliar severidades', 'Plano de mitigação'],
+  actionPlan:       ['Priorizar ações', 'Adicionar milestones', 'Simplificar plano'],
+  insights:         ['Insights adicionais', 'Insights de crescimento', 'Alerta estratégico'],
+};
+
 // ─── Sub-componentes ──────────────────────────────────────────────────────────
 
 function ScoreBar({ score }) {
@@ -153,6 +169,33 @@ function SectionLabel({ children }) {
     <div className="flex items-center gap-3 mb-6">
       <div className="w-1 h-4 bg-[var(--color-plan)]" />
       <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[#737373]">{children}</span>
+    </div>
+  );
+}
+
+function SectionCard({ label, subtitle, isEditing, onCopilot, children }) {
+  return (
+    <div className="border border-[#262626] bg-[#101010] overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-[#1a1a1a] bg-[#0d0d0d]">
+        <div className="flex items-center gap-3">
+          <div className="w-[3px] h-[14px] bg-[var(--color-plan)] shrink-0" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[#F2EFE9] font-bold">{label}</span>
+          {subtitle && (
+            <span className="font-mono text-[9px] text-[#525252] tracking-widest">{subtitle}</span>
+          )}
+        </div>
+        {!isEditing && (
+          <button
+            onClick={onCopilot}
+            className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-widest text-[var(--color-plan)] hover:bg-[var(--color-plan-10)] border border-transparent hover:border-[var(--color-plan-30)] px-2.5 py-1.5 transition-all shrink-0"
+          >
+            <Sparkles size={11} /> copiloto
+          </button>
+        )}
+      </div>
+      <div className="p-8">
+        {children}
+      </div>
     </div>
   );
 }
